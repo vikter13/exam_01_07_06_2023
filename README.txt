@@ -6,3 +6,13 @@
 Создал README.txt и добавил с помощью git add .
 Затем сделал коммит с помощью git commit -m "коммит"
 Создаем новую ветку и называем ее exam_01_07_06_2023
+
+
+Работа с docker:
+docker build . -t vikter13/exam_01_07_06_2023:1.0.0 для создания контейнера
+docker push vikter13/exam_01_07_06_2023:1.0.0 - чтобы залить на dockerhub
+docker run vikter13/exam_01_07_06_2023:1.0.0 -p "33333:33333" -d - чтобы запустить докер
+
+
+ссылка на докерхаб:
+https://hub.docker.com/repository/docker/vikter13/exam_01_07_06_2023/general
