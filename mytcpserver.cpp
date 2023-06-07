@@ -1,45 +1,57 @@
 #include "mytcpserver.h"
-#include <QDebug>
-#include <QCoreApplication>
+const int port = 33333;
 
-MyTcpServer::~MyTcpServer()
+
+MyTcpServer::MyTcpServer() // Конструктор
 {
-    //mTcpSocket->close();
-    mTcpServer->close();
+    if(this->listen(QHostAddress::Any, port)){
+        server_status=1;
+        qDebug() << "\r\nserver is started in port #" << port;
+        qDebug() << "putty -telnet localhost" << port << "\r\n";
+    } else {
+        qDebug() << "server is not started";
+    }
     server_status=0;
 }
-MyTcpServer::MyTcpServer(QObject *parent) : QObject(parent){
-    mTcpServer = new QTcpServer(this);
-    connect(mTcpServer, &QTcpServer::newConnection,
-            this, &MyTcpServer::slotNewConnection);
 
-    if(!mTcpServer->listen(QHostAddress::Any, 33333)){
-        qDebug() << "server is not started";
-    } else {
-        server_status=1;
-        qDebug() << "server is started";
-    }
-}
 
-void MyTcpServer::slotNewConnection(){
-    if(server_status==1){
-        mTcpSocket = mTcpServer->nextPendingConnection();
-        mTcpSocket->write("Hello, World!!! I am echo server!\r\n");
-        connect(mTcpSocket, &QTcpSocket::readyRead,
-                this,&MyTcpServer::slotServerRead);
-        connect(mTcpSocket,&QTcpSocket::disconnected,
-                this,&MyTcpServer::slotClientDisconnected);
-    }
+
+void MyTcpServer::incomingConnection(qintptr socketDescriptor){
+        another_Socket = new QTcpSocket;                        // Создание очередного нового сокета
+        another_Socket->setSocketDescriptor(socketDescriptor);  // Определение идентификатора сокета
+
+        another_Socket -> write("I am start!\r\n");             // Выводим сообщение пользователю
+
+        qDebug() << "Connect client: " << socketDescriptor;      // Вывод идентификатора подключённого клиента
+        connect(another_Socket, &QTcpSocket::readyRead,         // коннект на получение сообщения
+                this, &MyTcpServer::slotServerRead);            // при срабатывании запускаем slotServerRead
+
+        connect(another_Socket, &QTcpSocket::disconnected,      // коннект на отключение сокета
+                this, &MyTcpServer::slotClientDisconnected);                // при срабатывании запускаем deleteLater
+
+        Sockets.push_back(another_Socket);                      // Добавление нового сокета в список сокетов
+
+        /*
+        Sockets[another_Socket->socketDescriptor()] = another_Socket;  Добавление нового сокета в список сокетов
+                                                                           путём обращения к идентификатору */
+
 }
 
 void MyTcpServer::slotServerRead(){
-    while(mTcpSocket->bytesAvailable()>0)
-    {
-        QByteArray array =mTcpSocket->readAll();
-        mTcpSocket->write(array);
-    }
+    another_Socket = (QTcpSocket*)sender();         // Инициализация нового сокета
+
+    QString res = another_Socket->readAll();
+
+    if (res == "disconnect")
+        {
+            another_Socket -> write("\r\nU r Disconnected\r\nBye Bye\r\n\r\n");
+            slotClientDisconnected();
+        }
+    else
+        another_Socket -> write(parsing(res.toUtf8()).toUtf8());
 }
 
+
 void MyTcpServer::slotClientDisconnected(){
-    mTcpSocket->close();
+    another_Socket->disconnect();
 }

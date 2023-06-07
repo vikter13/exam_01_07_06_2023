@@ -1,5 +1,9 @@
-#ifndef MYSERVER_H
-#define MYSERVER_H
+#ifndef SERVER_H
+#define SERVER_H
+
+
+#include "functions.h"
+
 #include <QObject>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -7,29 +11,27 @@
 #include <QtNetwork>
 #include <QByteArray>
 #include <QDebug>
+#include <QVector>
 
-class MyTcpServer : public QObject
+
+class MyTcpServer : public QTcpServer
 {
     Q_OBJECT
 public:
-    explicit MyTcpServer(QObject *parent = nullptr);
-    ~MyTcpServer();
+    MyTcpServer();              // Конструктор
+    QTcpSocket *another_Socket; // Создание сокета
+
 public slots:
-    void slotNewConnection();
+
+    void incomingConnection(qintptr socketDescriptor);
+
     void slotClientDisconnected();
 
     void slotServerRead();
     //void slotReadClient();
-private:
-    QTcpServer * mTcpServer;
-    QTcpSocket * mTcpSocket;
+
+private:                                // Создание приватных свойств
+    QVector <QTcpSocket*> Sockets;      // Созданий списка (ассоциативного массива map) сокетов
     int server_status;
 };
-#endif // MYSERVER_H
-
-
-
-
-
-
-
+#endif // SERVER_H
